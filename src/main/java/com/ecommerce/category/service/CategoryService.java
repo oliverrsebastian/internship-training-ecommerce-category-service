@@ -1,17 +1,19 @@
 package com.ecommerce.category.service;
 
 import com.ecommerce.category.model.Category;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface CategoryService {
-    Category getById(String id);
+    Mono<Category> getById(Long id);
 
-    List<Category> getAll();
+    Mono<Category> getByName(String name);
 
-    Category insertCategory(Category category);
+    Flux<Category> getAll();
 
-    Category updateCategory(Category category);
+    Mono<Category> insertCategory(Category category);
 
-    Category deleteById(String id);
+    Mono<Category> updateCategory(Category category);
+
+    Mono<Category> deleteById(Long id);
 }

@@ -1,72 +1,74 @@
 package com.ecommerce.category.service;
 
 import com.ecommerce.category.model.Category;
-import org.springframework.beans.BeanUtils;
+import com.ecommerce.category.repository.CategoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-    private List<Category> categories;
+    private CategoryRepository categoryRepository;
 
-    public CategoryServiceImpl() {
-        categories = setData();
-    }
+    private Logger logger = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
-    private ArrayList setData() {
-        ArrayList categories = new ArrayList();
-        categories.add(new Category("CAT1", "Category 1"));
-        categories.add(new Category("CAT2", "Category 2"));
-        categories.add(new Category("CAT3", "Category 3"));
-        categories.add(new Category("CAT4", "Category 4"));
-        categories.add(new Category("CAT5", "Category 5"));
-        return categories;
+    @Autowired
+    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
-    public Category getById(String id) {
-        if (id != null && id.startsWith("CAT"))
-            for (Category category : categories)
-                if (category.getId().equals(id))
-                    return category;
-        return null;
-    }
-
-    @Override
-    public List<Category> getAll() {
-        return categories;
-    }
-
-    @Override
-    public Category insertCategory(Category category) {
-        categories.add(category);
-        return category;
-    }
-
-    @Override
-    public Category updateCategory(Category category) {
-        if (category != null) {
-            Category actual = this.getById(category.getId());
-            if (actual != null)
-                BeanUtils.copyProperties(category, actual);
-            categories.add(actual);
-            return category;
+    public Mono<Category> getById(Long id) {
+        if (id != null) {
+            return categoryRepository.findById(id);
         }
-        return null;
+        return Mono.empty();
     }
 
     @Override
-    public Category deleteById(String id) {
-        if (id != null && id.startsWith("CAT"))
-            for (Category category : categories) {
-                if (category.getId().equals(id)) {
-                    categories.remove(category);
-                    return category;
-                }
-            }
-        return null;
+    public Mono<Category> getByName(String name) {
+        return categoryRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    @Override
+    public Flux<Category> getAll() {
+        return categoryRepository.findAll();
+    }
+
+    @Override
+    public Mono<Category> insertCategory(Category category) {
+        if (category != null) {
+            return categoryRepository.count()
+                    .map(data -> data + 1)
+                    .map(data -> setCategoryId(category, data))
+                    .then(categoryRepository.save(category))
+                    .thenReturn(category);
+        }
+        return Mono.empty();
+    }
+
+    private Long setCategoryId(Category category, Long data) {
+        category.setId(data);
+        logger.info("ID : " + category.getId());
+        return category.getId();
+    }
+
+    @Override
+    public Mono<Category> updateCategory(Category category) {
+        if (category != null) {
+            return categoryRepository.save(category);
+        }
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Category> deleteById(Long id) {
+        return categoryRepository.findById(id)
+                .flatMap(data -> categoryRepository.delete(data)
+                        .thenReturn(data));
     }
 }

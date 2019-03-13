@@ -1,0 +1,27 @@
+PUT http://localhost:8080/api/categories/_edit
+Content-Type: application/json
+
+{
+  "id": 2,
+  "name": "Pakaian"
+}
+
+###
+
+POST http://localhost:8085/api/categories/_insert
+Content-Type: application/json
+
+{
+  "name": "Olahraga"
+}
+
+###
+
+DELETE http://localhost:8085/api/categories/1
+Api-Key : abc
+
+###
+
+GET http://localhost:8085/api/categories/refresh/publish
+
+###
